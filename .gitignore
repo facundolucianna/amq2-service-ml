@@ -1,3 +1,10 @@
+**/**/__pycache__
+
+.coverage
+.idea/
+
+logs/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -112,7 +119,6 @@ celerybeat.pid
 *.sage.py
 
 # Environments
-.env
 .venv
 env/
 venv/
