@@ -19,3 +19,9 @@ Cambiar .env a AIRFLOW_UID por el UID del usuario
 Para obtener el uid, usar el comando id, o 
 
 sudo cat /etc/passwd | grep ${USER}
+
+Crear directorios
+
+./airflow/logs
+./airflow/config
+./airflow/plugins

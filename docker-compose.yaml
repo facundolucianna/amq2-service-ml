@@ -22,7 +22,7 @@ x-airflow-common: &airflow-common
   networks:
     - frontend
     - backend
-  user: "${AIRFLOW_UID:-50000}:0"
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-0}"
   depends_on:  &airflow-common-depends-on
     postgres:
       condition: service_healthy
@@ -245,7 +245,7 @@ services:
           echo
         fi
         mkdir -p /sources/logs /sources/dags /sources/plugins
-        chown -R "${AIRFLOW_UID:-50000}:0" /sources/{logs,dags,plugins}
+        chown -R "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-0}" /sources/{logs,dags,plugins}
         exec /entrypoint airflow version
     # yamllint enable rule:line-length
     environment:
