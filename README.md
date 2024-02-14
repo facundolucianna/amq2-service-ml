@@ -10,3 +10,12 @@ Para matar todo y borrar todo
 En debug podemos usar el CLI de airflow
 
 docker-compose run airflow-cli config list      
+
+
+MacOS y Linux
+
+Cambiar .env a AIRFLOW_UID por el UID del usuario
+
+Para obtener el uid, usar el comando id, o 
+
+sudo cat /etc/passwd | grep ${USER}
