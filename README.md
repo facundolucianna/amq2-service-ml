@@ -5,7 +5,7 @@ Para levantar el profible debug
 docker compose --profile debug up
 
 Para matar todo y borrar todo
- docker compose down --rmi all --volume 
+ docker compose down --rmi all --volumes
 
 En debug podemos usar el CLI de airflow
 
