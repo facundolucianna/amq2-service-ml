@@ -22,6 +22,17 @@ sudo cat /etc/passwd | grep ${USER}
 
 Crear directorios
 
+./airflow/dags
 ./airflow/logs
 ./airflow/config
 ./airflow/plugins
+./airflow/secrets
+
+
+Adding variables
+
+In file secrets/variables.yaml you can add variables to be accessed in your DAGs.
+
+Adding connections
+
+In file secrets/connections.yaml you can add connections to be accessed in your DAGs.
