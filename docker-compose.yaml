@@ -16,6 +16,9 @@ x-airflow-common: &airflow-common
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'True'
     AIRFLOW__SECRETS__BACKEND: airflow.secrets.local_filesystem.LocalFilesystemBackend
     AIRFLOW__SECRETS__BACKEND_KWARGS: '{"variables_file_path": "/opt/secrets/variables.yaml", "connections_file_path": "/opt/secrets/connections.yaml"}'
+    AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minio}
+    AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_ACCESS_KEY:-minio123}
+    AWS_ENDPOINT_URL_S3: http://s3:${MINIO_PORT:-9000}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-./airflow}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-./airflow}/logs:/opt/airflow/logs
@@ -63,6 +66,7 @@ services:
     container_name: minio
     profiles:
       - mlflow
+      - airflow
       - all
     ports:
       - "${MINIO_PORT:-9000}:9000"
@@ -87,6 +91,7 @@ services:
     container_name: minio_create_bucket
     profiles:
       - mlflow
+      - airflow
       - all
     depends_on:
       - s3
