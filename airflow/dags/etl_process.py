@@ -106,7 +106,7 @@ def process_etl_hearth_data():
                      index=False)
 
         mlflow.set_tracking_uri('http://192.168.0.21:5001')
-        experiment = mlflow.set_experiment("ETL Hearth Disease tracking")
+        experiment = mlflow.set_experiment("Heart Disease")
 
         mlflow.start_run(run_name='ETL_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
                          experiment_id=experiment.experiment_id,
@@ -194,7 +194,7 @@ def process_etl_hearth_data():
         save_to_csv(X_test, "s3://data/final/test/hearth_X_test.csv")
 
         mlflow.set_tracking_uri('http://192.168.0.21:5001')
-        experiment = mlflow.set_experiment("ETL Hearth Disease tracking")
+        experiment = mlflow.set_experiment("Heart Disease")
 
         # Obtain the last experiment run_id to log the new information
         list_run = mlflow.search_runs([experiment.experiment_id], output_format="list")
