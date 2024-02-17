@@ -106,7 +106,7 @@ def process_etl_hearth_data():
                      index=False)
 
         mlflow.set_tracking_uri('http://192.168.0.21:5001')
-        experiment = mlflow.set_experiment("ETL Hearth Disease tracking")
+        experiment = mlflow.set_experiment("Heart Disease")
 
         mlflow.start_run(run_name='ETL_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
                          experiment_id=experiment.experiment_id,
