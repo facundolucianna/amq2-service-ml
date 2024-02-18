@@ -1,3 +1,5 @@
+import datetime
+
 from airflow.decorators import dag, task
 
 markdown_text = """
@@ -8,11 +10,22 @@ if it performs  better than the old one. It uses the F1 score to evaluate the mo
 
 """
 
+default_args = {
+    'owner': "Facundo Adrian Lucianna",
+    'depends_on_past': False,
+    'schedule_interval': None,
+    'retries': 1,
+    'retry_delay': datetime.timedelta(minutes=5),
+    'dagrun_timeout': datetime.timedelta(minutes=15)
+}
+
 @dag(
     dag_id="retrain_the_model",
     description="Re-train the model based on new data, tests the previous model, and put in production the new one if "
                 "it performs better than the old one",
+    doc_md=markdown_text,
     tags=["Re-Train", "Heart Disease"],
+    default_args=default_args,
     catchup=False,
 )
 def processing_dag():

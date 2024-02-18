@@ -53,7 +53,7 @@ app = FastAPI()
 
 
 @app.get("/")
-def read_root():
+async def read_root():
     return {"message": "Welcome to the Heart Disease Detector API"}
 
 
@@ -98,7 +98,7 @@ def predict(data: dict):
 
 
 @app.get("/schema/")
-def predict(data: dict):
+async def predict():
 
     input_schema = data_dict["columns_dtypes"]
     output_schema = {
