@@ -74,10 +74,14 @@ def process_etl_heart_data():
         """
         Convert categorical variables into one-hot encoding.
         """
+        import json
         import datetime
+        import boto3
+        import botocore.exceptions
+        import mlflow
+
         import awswrangler as wr
         import pandas as pd
-        import mlflow
 
         from airflow.models import Variable
 
@@ -105,6 +109,33 @@ def process_etl_heart_data():
         wr.s3.to_csv(df=dataset_with_dummies,
                      path=data_end_path,
                      index=False)
+
+        # Save information of the dataset
+        client = boto3.client('s3')
+
+        data_dict = {}
+        try:
+            client.head_object(Bucket='data', Key='data_info/data.json')
+            result = client.get_object(Bucket='data', Key='data_info/data.json')
+            text = result["Body"].read().decode()
+            data_dict = json.loads(text)
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != "404":
+                # Something else has gone wrong.
+                raise e
+
+        # Upload JSON String to an S3 Object
+        data_dict['columns'] = dataset.columns.to_list()
+        data_dict['categorical_columns'] = categories_list
+        data_dict['columns_dtypes'] = {k: str(v) for k, v in dataset.dtypes.to_dict().items()}
+        data_dict['date'] = datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
+        data_string = json.dumps(data_dict, indent=2)
+
+        client.put_object(
+            Bucket='data',
+            Key='data_info/data.json',
+            Body=data_string
+        )
 
         mlflow.set_tracking_uri('http://192.168.0.21:5001')
         experiment = mlflow.set_experiment("Heart Disease")
@@ -170,9 +201,13 @@ def process_etl_heart_data():
         """
         Standardization of numerical columns
         """
+        import json
+        import mlflow
+        import boto3
+        import botocore.exceptions
+
         import awswrangler as wr
         import pandas as pd
-        import mlflow
 
         from sklearn.preprocessing import StandardScaler
 
@@ -193,6 +228,29 @@ def process_etl_heart_data():
 
         save_to_csv(X_train, "s3://data/final/train/heart_X_train.csv")
         save_to_csv(X_test, "s3://data/final/test/heart_X_test.csv")
+
+        # Save information of the dataset
+        client = boto3.client('s3')
+
+        try:
+            client.head_object(Bucket='data', Key='data_info/data.json')
+            result = client.get_object(Bucket='data', Key='data_info/data.json')
+            text = result["Body"].read().decode()
+            data_dict = json.loads(text)
+        except botocore.exceptions.ClientError as e:
+                # Something else has gone wrong.
+                raise e
+
+        # Upload JSON String to an S3 Object
+        data_dict['standard_scaler_mean'] = sc_X.mean_.tolist()
+        data_dict['standard_scaler_std'] = sc_X.scale_.tolist()
+        data_string = json.dumps(data_dict, indent=2)
+
+        client.put_object(
+            Bucket='data',
+            Key='data_info/data.json',
+            Body=data_string
+        )
 
         mlflow.set_tracking_uri('http://192.168.0.21:5001')
         experiment = mlflow.set_experiment("Heart Disease")
