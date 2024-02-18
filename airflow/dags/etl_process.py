@@ -25,14 +25,14 @@ default_args = {
 
 
 @dag(
-    dag_id="process_etl_hearth_data",
+    dag_id="process_etl_heart_data",
     description="ETL process for heart data, separating the dataset into training and testing sets.",
     doc_md=markdown_text,
     tags=["ETL", "Heart Disease"],
     default_args=default_args,
     catchup=False,
 )
-def process_etl_hearth_data():
+def process_etl_heart_data():
 
     @task.virtualenv(
         task_id="obtain_original_data",
@@ -51,12 +51,13 @@ def process_etl_hearth_data():
         # fetch dataset
         heart_disease = fetch_ucirepo(id=45)
 
-        data_path = "s3://data/raw/hearth.csv"
+        data_path = "s3://data/raw/heart.csv"
         dataframe = heart_disease.data.original
 
-        target_col = Variable.get("target_col_hearth")
+        target_col = Variable.get("target_col_heart")
 
-        # Replace level of hearth decease to just distinguish presence (values 1,2,3,4) from absence (value 0).
+        # Replace level of heart decease to just distinguish presence 
+        # (values 1,2,3,4) from absence (value 0).
         dataframe.loc[dataframe[target_col] > 0, target_col] = 1
 
         wr.s3.to_csv(df=dataframe,
@@ -80,8 +81,8 @@ def process_etl_hearth_data():
 
         from airflow.models import Variable
 
-        data_original_path = "s3://data/raw/hearth.csv"
-        data_end_path = "s3://data/raw/hearth_dummies.csv"
+        data_original_path = "s3://data/raw/heart.csv"
+        data_end_path = "s3://data/raw/heart_dummies.csv"
         dataset = wr.s3.read_csv(data_original_path)
 
         # Clean duplicates
@@ -110,13 +111,13 @@ def process_etl_hearth_data():
 
         mlflow.start_run(run_name='ETL_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
                          experiment_id=experiment.experiment_id,
-                         tags={"experiment": "etl", "dataset": "Hearth disease"},
+                         tags={"experiment": "etl", "dataset": "Heart disease"},
                          log_system_metrics=True)
 
         mlflow_dataset = mlflow.data.from_pandas(dataset_with_dummies,
                                                  source="https://archive.ics.uci.edu/dataset/45/heart+disease",
-                                                 targets=Variable.get("target_col_hearth"),
-                                                 name="hearth_data_complete")
+                                                 targets=Variable.get("target_col_heart"),
+                                                 name="heart_data_complete")
         mlflow.log_input(mlflow_dataset, context="Dataset")
 
 
@@ -139,11 +140,11 @@ def process_etl_hearth_data():
                          path=path,
                          index=False)
 
-        data_original_path = "s3://data/raw/hearth_dummies.csv"
+        data_original_path = "s3://data/raw/heart_dummies.csv"
         dataset = wr.s3.read_csv(data_original_path)
 
-        test_size = Variable.get("test_size_hearth")
-        target_col = Variable.get("target_col_hearth")
+        test_size = Variable.get("test_size_heart")
+        target_col = Variable.get("target_col_heart")
 
         X = dataset.drop(columns=target_col)
         y = dataset[[target_col]]
@@ -153,10 +154,10 @@ def process_etl_hearth_data():
         # Clean duplicates
         dataset.drop_duplicates(inplace=True, ignore_index=True)
 
-        save_to_csv(X_train, "s3://data/final/train/hearth_X_train.csv")
-        save_to_csv(X_test, "s3://data/final/test/hearth_X_test.csv")
-        save_to_csv(y_train, "s3://data/final/train/hearth_y_train.csv")
-        save_to_csv(y_test, "s3://data/final/test/hearth_y_test.csv")
+        save_to_csv(X_train, "s3://data/final/train/heart_X_train.csv")
+        save_to_csv(X_test, "s3://data/final/test/heart_X_test.csv")
+        save_to_csv(y_train, "s3://data/final/train/heart_y_train.csv")
+        save_to_csv(y_test, "s3://data/final/test/heart_y_test.csv")
 
     @task.virtualenv(
         task_id="normalize_numerical_features",
@@ -180,8 +181,8 @@ def process_etl_hearth_data():
                          path=path,
                          index=False)
 
-        X_train = wr.s3.read_csv("s3://data/final/train/hearth_X_train.csv")
-        X_test = wr.s3.read_csv("s3://data/final/test/hearth_X_test.csv")
+        X_train = wr.s3.read_csv("s3://data/final/train/heart_X_train.csv")
+        X_test = wr.s3.read_csv("s3://data/final/test/heart_X_test.csv")
 
         sc_X = StandardScaler(with_mean=True, with_std=True)
         X_train_arr = sc_X.fit_transform(X_train)
@@ -190,8 +191,8 @@ def process_etl_hearth_data():
         X_train = pd.DataFrame(X_train_arr, columns=X_train.columns)
         X_test = pd.DataFrame(X_test_arr, columns=X_test.columns)
 
-        save_to_csv(X_train, "s3://data/final/train/hearth_X_train.csv")
-        save_to_csv(X_test, "s3://data/final/test/hearth_X_test.csv")
+        save_to_csv(X_train, "s3://data/final/train/heart_X_train.csv")
+        save_to_csv(X_test, "s3://data/final/test/heart_X_test.csv")
 
         mlflow.set_tracking_uri('http://192.168.0.21:5001')
         experiment = mlflow.set_experiment("Heart Disease")
@@ -211,4 +212,4 @@ def process_etl_hearth_data():
     get_data() >> make_dummies_variables() >> split_dataset() >> normalize_data()
 
 
-dag = process_etl_hearth_data()
+dag = process_etl_heart_data()
