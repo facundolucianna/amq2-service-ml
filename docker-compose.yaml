@@ -19,6 +19,7 @@ x-airflow-common: &airflow-common
     AWS_ACCESS_KEY_ID: ${MINIO_ACCESS_KEY:-minio}
     AWS_SECRET_ACCESS_KEY: ${MINIO_SECRET_ACCESS_KEY:-minio123}
     AWS_ENDPOINT_URL_S3: http://s3:9000
+    MLFLOW_S3_ENDPOINT_URL: http://s3:9000
   volumes:
     - ${AIRFLOW_PROJ_DIR:-./airflow}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-./airflow}/logs:/opt/airflow/logs
