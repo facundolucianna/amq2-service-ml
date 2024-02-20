@@ -79,7 +79,7 @@ curl -X 'POST' \
 La respuesta del modelo será un valor booleano y un mensaje en forma de cadena de texto que 
 indicará si el paciente tiene o no una enfermedad cardiaca.
 
-```bash
+```json
 {
   "int_output": true,
   "str_output": "Heart disease detected"
