@@ -46,7 +46,7 @@ def processing_dag():
         from sklearn.metrics import f1_score
         from mlflow.models import infer_signature
 
-        mlflow.set_tracking_uri('http://192.168.0.21:5001')
+        mlflow.set_tracking_uri('http://mlflow:5000')
 
         def load_the_champion_model():
 
@@ -157,7 +157,7 @@ def processing_dag():
 
         from sklearn.metrics import f1_score
 
-        mlflow.set_tracking_uri('http://192.168.0.21:5001')
+        mlflow.set_tracking_uri('http://mlflow:5000')
 
         def load_the_model(alias):
             model_name = "heart_disease_model_prod"

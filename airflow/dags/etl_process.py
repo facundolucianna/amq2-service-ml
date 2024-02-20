@@ -82,6 +82,7 @@ def process_etl_heart_data():
 
         import awswrangler as wr
         import pandas as pd
+        import numpy as np
 
         from airflow.models import Variable
 
@@ -124,10 +125,26 @@ def process_etl_heart_data():
                 # Something else has gone wrong.
                 raise e
 
+        target_col = Variable.get("target_col_heart")
+        dataset_log = dataset.drop(columns=target_col)
+        dataset_with_dummies_log = dataset_with_dummies.drop(columns=target_col)
+
         # Upload JSON String to an S3 Object
-        data_dict['columns'] = dataset.columns.to_list()
+        data_dict['columns'] = dataset_log.columns.to_list()
+        data_dict['columns_after_dummy'] = dataset_with_dummies_log.columns.to_list()
+        data_dict['target_col'] = target_col
         data_dict['categorical_columns'] = categories_list
-        data_dict['columns_dtypes'] = {k: str(v) for k, v in dataset.dtypes.to_dict().items()}
+        data_dict['columns_dtypes'] = {k: str(v) for k, v in dataset_log.dtypes.to_dict().items()}
+        data_dict['columns_dtypes_after_dummy'] = {k: str(v) for k, v in dataset_with_dummies_log.dtypes
+                                                                                                 .to_dict()
+                                                                                                 .items()}
+
+        category_dummies_dict = {}
+        for category in categories_list:
+            category_dummies_dict[category] = np.sort(dataset_log[category].unique()).tolist()
+
+        data_dict['categories_values_per_categorical'] = category_dummies_dict
+
         data_dict['date'] = datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
         data_string = json.dumps(data_dict, indent=2)
 
@@ -137,7 +154,7 @@ def process_etl_heart_data():
             Body=data_string
         )
 
-        mlflow.set_tracking_uri('http://192.168.0.21:5001')
+        mlflow.set_tracking_uri('http://mlflow:5000')
         experiment = mlflow.set_experiment("Heart Disease")
 
         mlflow.start_run(run_name='ETL_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
@@ -145,12 +162,16 @@ def process_etl_heart_data():
                          tags={"experiment": "etl", "dataset": "Heart disease"},
                          log_system_metrics=True)
 
-        mlflow_dataset = mlflow.data.from_pandas(dataset_with_dummies,
+        mlflow_dataset = mlflow.data.from_pandas(dataset,
                                                  source="https://archive.ics.uci.edu/dataset/45/heart+disease",
-                                                 targets=Variable.get("target_col_heart"),
+                                                 targets=target_col,
                                                  name="heart_data_complete")
+        mlflow_dataset_dummies = mlflow.data.from_pandas(dataset_with_dummies,
+                                                         source="https://archive.ics.uci.edu/dataset/45/heart+disease",
+                                                         targets=target_col,
+                                                         name="heart_data_complete_with_dummies")
         mlflow.log_input(mlflow_dataset, context="Dataset")
-
+        mlflow.log_input(mlflow_dataset_dummies, context="Dataset")
 
     @task.virtualenv(
         task_id="split_dataset",
@@ -252,7 +273,7 @@ def process_etl_heart_data():
             Body=data_string
         )
 
-        mlflow.set_tracking_uri('http://192.168.0.21:5001')
+        mlflow.set_tracking_uri('http://mlflow:5000')
         experiment = mlflow.set_experiment("Heart Disease")
 
         # Obtain the last experiment run_id to log the new information
