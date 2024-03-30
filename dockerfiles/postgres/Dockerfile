@@ -5,5 +5,3 @@ FROM postgres:latest
 # *.sql, *.sql.gz, or *.sh scripts under /docker-entrypoint-initdb.d (creating the directory if necessary).
 # After the entrypoint calls initdb to create the default postgres user and database, it will run any *.sql files
 # and source any *.sh scripts found in that directory to do further initialization before starting the service.
-
-COPY create-multiple-postgresql-databases.sh /docker-entrypoint-initdb.d/

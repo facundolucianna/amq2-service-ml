@@ -1,9 +1,8 @@
-# Ejemplo de Implementación de un Modelo de Heart Disease 
+# Ejemplo de Batch Processing
 ### AMq2 - CEIA - FIUBA
 
-En este ejemplo, mostramos una implementación de un modelo productivo para detectar si un 
-paciente tiene una enfermedad cardiaca o no, utilizando el servicio de 
-**ML Models and something more Inc.**. Para ello, obtenemos los datos de 
+En este ejemplo, se muestra un ejemplo de un procesamiento de Batch Processing. 
+
 [Heart Disease - UCI Machine Learning Repository](https://archive.ics.uci.edu/dataset/45/heart+disease).
 
 La implementación incluye:
