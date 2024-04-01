@@ -3,6 +3,7 @@ pylint
 numpy
 pandas
 matplotlib
-scikit-learn
 xgboost
 redis
+matplotlib
+seaborn
