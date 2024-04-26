@@ -163,7 +163,44 @@ def process_etl_water_data():
                                                          name="water_quality_complete_imputed")
         mlflow.log_input(mlflow_dataset, context="Dataset")
         mlflow.log_input(mlflow_dataset_dummies, context="Dataset")
-        
-    get_data() >> impute_missing_values()
+
+
+    @task.virtualenv(
+        task_id="split_dataset",
+        requirements=["awswrangler==3.6.0",
+                      "scikit-learn"],
+        system_site_packages=True
+    )
+    def split_dataset():
+        """
+        Generate a dataset split into a training part and a test part
+        """
+        import awswrangler as wr
+        from sklearn.model_selection import train_test_split
+        from airflow.models import Variable
+
+        def save_to_csv(df, path):
+            wr.s3.to_csv(df=df,
+                         path=path,
+                         index=False)
+
+        data_original_path = "s3://data/raw/water-quality-imputed.csv"
+        dataset = wr.s3.read_csv(data_original_path)
+
+        test_size = Variable.get("test_size_water")
+        target_col = Variable.get("target_col_water")
+
+        X = dataset.drop(columns=target_col)
+        y = dataset[[target_col]]
+
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=0, stratify=y)
+
+        save_to_csv(X_train, "s3://data/final/train/water_X_train.csv")
+        save_to_csv(X_test, "s3://data/final/test/water_X_test.csv")
+        save_to_csv(y_train, "s3://data/final/train/water_y_train.csv")
+        save_to_csv(y_test, "s3://data/final/test/water_y_test.csv")
+
+
+    get_data() >> impute_missing_values() >> split_dataset()
     
 dag = process_etl_water_data()
