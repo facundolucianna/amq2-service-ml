@@ -63,6 +63,107 @@ def process_etl_water_data():
                      index=False)
 
 
-    get_data()
+    @task.virtualenv(
+        task_id="impute_missing_values",
+        requirements=["pandas",
+                      "scikit-learn",
+                      "numpy",
+                      "awswrangler==3.6.0"],
+        system_site_packages=True
+    )   
+    def impute_missing_values():
+        """
+        Multiple Imputation by Chained Equations (MICE).
+        """
+        import json
+        import datetime
+        import boto3
+        import botocore.exceptions
+        import mlflow
+        
+        from sklearn.experimental import enable_iterative_imputer
+        from sklearn.impute import IterativeImputer
+        import awswrangler as wr
+        import pandas as pd
+        import numpy as np
+        
+        from airflow.models import Variable
+        
+        data_original_path = "s3://data/raw/water-quality.csv"
+        data_end_path = "s3://data/raw/water-quality-imputed.csv"
+        
+        dataset = wr.s3.read_csv(data_original_path)
+        
+        NUMERICAL_FEATURES = ['ph', 'Hardness', 'Solids', 'Chloramines', 'Sulfate', 'Conductivity', 'Organic_carbon', 'Trihalomethanes',  'Turbidity']
+        TARGET = Variable.get("target_col_water")
+        
+        X = dataset[NUMERICAL_FEATURES].values
+        y = dataset[TARGET].values
+
+        # Crear el IterativeImputer con el parámetro imputer__n_nearest_features igual a 6
+        mice_imputer = IterativeImputer(n_nearest_features=6, random_state=0)
+        mice_imputer.fit(X, y)
+        X_imputed = mice_imputer.transform(X)
+        y = y.reshape(-1, 1)
+        
+        dataframe_imputed = pd.DataFrame(data=np.concatenate((X_imputed, y), axis=1), columns=dataset.columns)
+        
+        wr.s3.to_csv(df=dataframe_imputed,
+                     path=data_end_path,
+                     index=False)
+        
+        # Save information of the dataset
+        client = boto3.client('s3')
+        
+        data_dict = {}
+        try:
+            client.head_object(Bucket='data', Key='data_info/data.json')
+            result = client.get_object(Bucket='data', Key='data_info/data.json')
+            text = result["Body"].read().decode()
+            data_dict = json.loads(text)
+        except botocore.exceptions.ClientError as e:
+            if e.response['Error']['Code'] != "404":
+                # Something else has gone wrong.
+                raise e
+            
+        dataset_log = dataset.drop(columns=TARGET)
+        dataset_imputed_log = dataframe_imputed.drop(columns=TARGET)
+        
+        # Upload JSON String to an S3 Object
+        data_dict['columns'] = dataset_log.columns.to_list()
+        data_dict['columns_after_imputation'] = dataset_imputed_log.columns.to_list()
+        data_dict['target_col'] = TARGET
+        data_dict['columns_dtypes'] = {k: str(v) for k, v in dataset_log.dtypes.to_dict().items()}
+        data_dict['columns_dtypes_after_imputation'] = {k: str(v) for k, v in dataset_imputed_log.dtypes.to_dict().items()}
+
+        data_dict['date'] = datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"')
+        data_string = json.dumps(data_dict, indent=2)
+
+        client.put_object(
+            Bucket='data',
+            Key='data_info/data.json',
+            Body=data_string
+        )
+        
+        mlflow.set_tracking_uri('http://mlflow:5000')
+        experiment = mlflow.set_experiment("Water Quality")
+
+        mlflow.start_run(run_name='ETL_run_' + datetime.datetime.today().strftime('%Y/%m/%d-%H:%M:%S"'),
+                         experiment_id=experiment.experiment_id,
+                         tags={"experiment": "etl", "dataset": "Water Quality"},
+                         log_system_metrics=True)
+        
+        mlflow_dataset = mlflow.data.from_pandas(dataset,
+                                                 source="https://www.kaggle.com/datasets/adityakadiwal/water-potability",
+                                                 targets=TARGET,
+                                                 name="water_quality_complete")
+        mlflow_dataset_dummies = mlflow.data.from_pandas(dataframe_imputed,
+                                                         source="https://www.kaggle.com/datasets/adityakadiwal/water-potability",
+                                                         targets=TARGET,
+                                                         name="water_quality_complete_imputed")
+        mlflow.log_input(mlflow_dataset, context="Dataset")
+        mlflow.log_input(mlflow_dataset_dummies, context="Dataset")
+        
+    get_data() >> impute_missing_values()
     
 dag = process_etl_water_data()
