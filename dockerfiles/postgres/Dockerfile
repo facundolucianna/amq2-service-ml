@@ -6,4 +6,4 @@ FROM postgres:latest
 # After the entrypoint calls initdb to create the default postgres user and database, it will run any *.sql files
 # and source any *.sh scripts found in that directory to do further initialization before starting the service.
 
-COPY create-multiple-postgresql-databases.sh /docker-entrypoint-initdb.d/
+COPY mlflow.sql /docker-entrypoint-initdb.d/
