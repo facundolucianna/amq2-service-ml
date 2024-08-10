@@ -52,7 +52,6 @@ services:
       - POSTGRES_USER=${PG_USER:-airflow}
       - POSTGRES_PASSWORD=${PG_PASSWORD:-airflow}
       - POSTGRES_DATABASE=${PG_DATABASE:-airflow}
-      - POSTGRES_MULTIPLE_DATABASES=${PG_MULTIPLE_DATABASES:-mlflow_db}
     volumes:
       - db_data:/var/lib/postgresql/data
     healthcheck:
@@ -131,7 +130,7 @@ services:
       - MLFLOW_S3_ENDPOINT_URL=http://s3:9000
     command: >
       mlflow server 
-      --backend-store-uri postgresql://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres:5432/${MLFLOW_DB:-mlflow_db}
+      --backend-store-uri postgresql://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres:5432/mlflow_db
       --host 0.0.0.0
       --default-artifact-root s3://${MLFLOW_BUCKET_NAME:-mlflow}/
     healthcheck:
