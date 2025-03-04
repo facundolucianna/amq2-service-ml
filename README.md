@@ -1,6 +1,6 @@
 # Ejemplo de ambiente productivo
-### MLPOS1 - CEIA - FIUBA
-Estructura de servicios para la implementación del proyecto final de MLPOS1 - CEIA - FIUBA
+### MLOps1 - CEIA - FIUBA
+Estructura de servicios para la implementación del proyecto final de MLOps1 - CEIA - FIUBA
 
 Supongamos que trabajamos para **ML Models and something more Inc.**, la cual ofrece un servicio 
 que proporciona modelos mediante una REST API. Internamente, tanto para realizar tareas de 
