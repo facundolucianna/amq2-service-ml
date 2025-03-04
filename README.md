@@ -1,5 +1,5 @@
 # Ejemplo de Batch Processing
-### AMq2 - CEIA - FIUBA
+### MLPOS1 - CEIA - FIUBA
 
 ![Diagrama de servicios](redis_batch.png)
 
