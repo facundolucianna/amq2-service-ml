@@ -1,5 +1,5 @@
 # Ejemplo de Implementación de un Modelo de Heart Disease 
-### AMq2 - CEIA - FIUBA
+### MLPOS1 - CEIA - FIUBA
 
 En este ejemplo, mostramos una implementación de un modelo productivo para detectar si un 
 paciente tiene una enfermedad cardiaca o no, utilizando el servicio de 
