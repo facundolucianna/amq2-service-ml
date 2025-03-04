@@ -1,6 +1,6 @@
 # Ejemplo de ambiente productivo
-### AMq2 - CEIA - FIUBA
-Estructura de servicios para la implementación del proyecto final de AMq2 - CEIA - FIUBA
+### MLPOS1 - CEIA - FIUBA
+Estructura de servicios para la implementación del proyecto final de MLPOS1 - CEIA - FIUBA
 
 Supongamos que trabajamos para **ML Models and something more Inc.**, la cual ofrece un servicio 
 que proporciona modelos mediante una REST API. Internamente, tanto para realizar tareas de 
@@ -32,7 +32,7 @@ y las siguientes bases de datos:
 
 ## Tarea a realizar
 
-La tarea es implementar el modelo que desarrollaron en Aprendizaje de Máquina I en este 
+La tarea es implementar el modelo que desarrollaron en Aprendizaje de Máquina en este 
 ambiente productivo. Para ello, pueden usar y crear los buckets y bases de datos que 
 necesiten. Lo mínimo que deben realizar es:
 
@@ -79,7 +79,7 @@ docker compose --profile all up
 que todos los servicios estén healthy o revisa en Docker Desktop), podrás acceder a los 
 diferentes servicios mediante:
    - Apache Airflow: http://localhost:8080
-   - MLflow: http://localhost:5000
+   - MLflow: http://localhost:5001
    - MinIO: http://localhost:9001 (ventana de administración de Buckets)
    - API: http://localhost:8800/
    - Documentación de la API: http://localhost:8800/docs
