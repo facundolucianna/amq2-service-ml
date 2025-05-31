@@ -158,3 +158,5 @@ cython_debug/
 #.idea/
 metaflow.s3.*
 .metaflow
+.DS_Store
+.DS_store
