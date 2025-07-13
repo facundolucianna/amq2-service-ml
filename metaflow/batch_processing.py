@@ -57,6 +57,9 @@ class BatchProcessingModel(FlowSpec):
 
         print("Obtaining predictions")
 
+        model = None
+        data = None
+
         # Se recorren las tareas previas para obtener los datos y el modelo.
         for task in previous_tasks:
             if hasattr(task, 'X_batch'):
@@ -85,26 +88,26 @@ class BatchProcessingModel(FlowSpec):
 
         self.redis_data = dict_redis
 
-        self.next(self.ingest_redis)
+        self.next(self.ingest_valkey)
 
     @step
-    def ingest_redis(self):
+    def ingest_valkey(self):
         """
-        Paso para ingestar los resultados en Redis.
+        Paso para ingestar los resultados en Valkey.
         """
         import redis
 
         print("Ingesting Redis")
-        r = redis.Redis(host='localhost', port=6379, decode_responses=True)
+        r = redis.Redis(host='localhost', port=6379, password='password', decode_responses=True)
 
-        # Comenzamos un pipeline de Redis
+        # Comenzamos un pipeline de Valkey
         pipeline = r.pipeline()
 
-        # Se pre-ingresan los datos en Redis.
+        # Se pre-ingresan los datos en Valkey.
         for key, value in self.redis_data.items():
             pipeline.set(key, value)
 
-        # Ahora ingestamos todos de una y dejamos que Redis resuelva de la forma más eficiente
+        # Ahora ingestamos todos de una y dejamos que Valkey resuelva de la forma más eficiente
         pipeline.execute()
 
         self.next(self.end)
