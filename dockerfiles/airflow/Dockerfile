@@ -1,4 +1,5 @@
-FROM apache/airflow:2.8.1
+FROM apache/airflow:3.0.2
+COPY requirements.txt /requirements.txt
 
 USER root
 RUN apt-get update \
@@ -11,5 +12,5 @@ RUN apt-get update \
 USER airflow
 COPY requirements.txt /requirements.txt
 
-RUN pip install --user --upgrade pip
-RUN pip install --no-cache-dir --user apache-airflow[virtualenv]==2.8.1 -r /requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir apache-airflow[virtualenv]==3.0.2 -r /requirements.txt
