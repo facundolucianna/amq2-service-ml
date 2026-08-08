@@ -33,8 +33,10 @@ x-airflow-common: &airflow-common
     AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
     AIRFLOW__CELERY__WORKER_CONCURRENCY: '2'
     AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://${PG_USER:-airflow}:${PG_PASSWORD:-airflow}@postgres/${PG_DATABASE:-airflow}
-    AIRFLOW__CORE__FERNET_KEY: ''
-    AIRFLOW__API_AUTH__JWT_SECRET: 'qt2Edq6LIRdv5k0DDznVOA=='
+    AIRFLOW__CORE__FERNET_KEY: '${AIRFLOW_FERNET_KEY:-46BKJvoBr0Ph6r0YS25A_7chFOW_SpyJF3tiWFDBA58=}'
+    AIRFLOW__CORE__SECRET_KEY: '${AIRFLOW_SECRET_KEY:-qt2Edq6LIRdv5k0DDznVOA==}'
+    AIRFLOW__API__SECRET_KEY: '${AIRFLOW_SECRET_KEY:-qt2Edq6LIRdv5k0DDznVOA==}'
+    AIRFLOW__API_AUTH__JWT_SECRET: '${AIRFLOW_API_JWT_SECRET:-qt2Edq6LIRdv5k0DDznVOA==}'
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
     AIRFLOW__CORE__LOAD_EXAMPLES: 'true' # Change to 'false' to remove the tutorials and examples
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
