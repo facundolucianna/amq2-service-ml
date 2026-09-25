@@ -38,7 +38,7 @@ x-airflow-common: &airflow-common
     AIRFLOW__API__SECRET_KEY: '${AIRFLOW_SECRET_KEY:-qt2Edq6LIRdv5k0DDznVOA==}'
     AIRFLOW__API_AUTH__JWT_SECRET: '${AIRFLOW_API_JWT_SECRET:-qt2Edq6LIRdv5k0DDznVOA==}'
     AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
-    AIRFLOW__CORE__LOAD_EXAMPLES: 'true' # Change to 'false' to remove the tutorials and examples
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
     AIRFLOW__CORE__EXECUTION_API_SERVER_URL: 'http://airflow-apiserver:8080/execution/'
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     AIRFLOW__WEBSERVER__EXPOSE_CONFIG: 'True'
@@ -109,7 +109,7 @@ services:
 
   s3:
     restart: always
-    image: quay.io/minio/minio:latest
+    image: cgr.dev/chainguard/minio:latest
     container_name: minio
     profiles:
       - mlflow
@@ -134,7 +134,7 @@ services:
       retries: 3
 
   create_s3_buckets:
-    image: quay.io/minio/mc:latest
+    image: cgr.dev/chainguard/minio-client:latest-dev
     container_name: minio_create_bucket
     profiles:
       - mlflow

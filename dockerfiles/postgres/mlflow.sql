@@ -1,1 +1,2 @@
-CREATE DATABASE mlflow_db
+CREATE DATABASE mlflow_db;
+CREATE DATABASE taxi;

@@ -7,3 +7,5 @@ numpy
 matplotlib
 seaborn
 scikit-learn
+
+sqlalchemy<2.1
