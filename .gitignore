@@ -4,6 +4,10 @@
 .idea/
 
 logs/
+# ...pero airflow/logs/.gitkeep se versiona para que la carpeta exista al clonar
+!airflow/logs/
+airflow/logs/*
+!airflow/logs/.gitkeep
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
