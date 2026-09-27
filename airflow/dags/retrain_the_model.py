@@ -32,9 +32,9 @@ def processing_dag():
 
     @task.virtualenv(
         task_id="train_the_challenger_model",
-        requirements=["scikit-learn==1.3.2",
-                      "mlflow==2.10.2",
-                      "awswrangler==3.6.0"],
+        requirements=["scikit-learn==1.9.1",
+                      "mlflow==3.16.1",
+                      "awswrangler==3.17.1"],
         system_site_packages=True
     )
     def train_the_challenger_model():
@@ -53,10 +53,9 @@ def processing_dag():
             model_name = "heart_disease_model_prod"
             alias = "champion"
 
-            client = mlflow.MlflowClient()
-            model_data = client.get_model_version_by_alias(model_name, alias)
-
-            champion_version = mlflow.sklearn.load_model(model_data.source)
+            # The model version "source" is an artifact URI (models:/m-<hash>) and
+            # cannot be loaded directly, so resolve the alias into a models:/ URI.
+            champion_version = mlflow.sklearn.load_model(f"models:/{model_name}@{alias}")
 
             return champion_version
 
@@ -83,38 +82,34 @@ def processing_dag():
 
             mlflow.log_params(params)
 
-            # Save the artifact of the challenger model
-            artifact_path = "model"
-
             signature = infer_signature(X, model.predict(X))
 
-            mlflow.sklearn.log_model(
+            model_info = mlflow.sklearn.log_model(
+                name="model",
                 sk_model=model,
-                artifact_path=artifact_path,
                 signature=signature,
-                serialization_format='cloudpickle',
-                registered_model_name="heart_disease_model_dev",
-                metadata={"model_data_version": 1}
+                registered_model_name="heart_disease_model_dev"
             )
 
-            # Obtain the model URI
-            return mlflow.get_artifact_uri(artifact_path)
+            # The runs:/ URI is not resolvable through a models:/ URI, so the
+            # registered version has to point at the models:/ artifact instead.
+            return model_info.model_uri, model_info.run_id
 
-        def register_challenger(model, f1_score, model_uri):
+        def register_challenger(model, f1, model_uri, run_id):
 
             client = mlflow.MlflowClient()
             name = "heart_disease_model_prod"
 
             # Save the model params as tags
-            tags = model.get_params()
+            tags = {key: str(value) for key, value in model.get_params().items()}
             tags["model"] = type(model).__name__
-            tags["f1-score"] = f1_score
+            tags["f1-score"] = str(f1)
 
             # Save the version of the model
             result = client.create_model_version(
                 name=name,
                 source=model_uri,
-                run_id=model_uri.split("/")[-3],
+                run_id=run_id,
                 tags=tags
             )
 
@@ -135,23 +130,23 @@ def processing_dag():
 
         # Obtain the metric of the model
         y_pred = challenger_model.predict(X_test)
-        f1_score = f1_score(y_test.to_numpy().ravel(), y_pred)
+        f1 = f1_score(y_test.to_numpy().ravel(), y_pred)
 
         # Track the experiment
-        artifact_uri = mlflow_track_experiment(challenger_model, X_train)
+        model_uri, run_id = mlflow_track_experiment(challenger_model, X_train)
 
         # Record the model
-        register_challenger(challenger_model, f1_score, artifact_uri)
+        register_challenger(challenger_model, f1, model_uri, run_id)
 
 
     @task.virtualenv(
-        task_id="train_the_challenger_model",
-        requirements=["scikit-learn==1.3.2",
-                      "mlflow==2.10.2",
-                      "awswrangler==3.6.0"],
+        task_id="evaluate_champion_challenger",
+        requirements=["scikit-learn==1.9.1",
+                      "mlflow==3.16.1",
+                      "awswrangler==3.17.1"],
         system_site_packages=True
     )
-    def evaluate_champion_challenge():
+    def evaluate_champion_challenger():
         import mlflow
         import awswrangler as wr
 
@@ -162,10 +157,9 @@ def processing_dag():
         def load_the_model(alias):
             model_name = "heart_disease_model_prod"
 
-            client = mlflow.MlflowClient()
-            model_data = client.get_model_version_by_alias(model_name, alias)
-
-            model = mlflow.sklearn.load_model(model_data.source)
+            # The model version "source" is an artifact URI (models:/m-<hash>) and
+            # cannot be loaded directly, so resolve the alias into a models:/ URI.
+            model = mlflow.sklearn.load_model(f"models:/{model_name}@{alias}")
 
             return model
 
@@ -216,10 +210,11 @@ def processing_dag():
 
         experiment = mlflow.set_experiment("Heart Disease")
 
-        # Obtain the last experiment run_id to log the new information
-        list_run = mlflow.search_runs([experiment.experiment_id], output_format="list")
+        # Log on the run that produced the challenger model
+        client = mlflow.MlflowClient()
+        challenger_version = client.get_model_version_by_alias("heart_disease_model_prod", "challenger")
 
-        with mlflow.start_run(run_id=list_run[0].info.run_id):
+        with mlflow.start_run(run_id=challenger_version.run_id):
             mlflow.log_metric("test_f1_challenger", f1_score_challenger)
             mlflow.log_metric("test_f1_champion", f1_score_champion)
 
@@ -234,7 +229,7 @@ def processing_dag():
         else:
             demote_challenger(name)
 
-    train_the_challenger_model() >> evaluate_champion_challenge()
+    train_the_challenger_model() >> evaluate_champion_challenger()
 
 
 my_dag = processing_dag()

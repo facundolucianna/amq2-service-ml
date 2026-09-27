@@ -37,7 +37,7 @@ def process_etl_heart_data():
     @task.virtualenv(
         task_id="obtain_original_data",
         requirements=["ucimlrepo==0.0.3",
-                      "awswrangler==3.6.0"],
+                      "awswrangler==3.17.1"],
         system_site_packages=True
     )
     def get_data():
@@ -67,7 +67,8 @@ def process_etl_heart_data():
 
     @task.virtualenv(
         task_id="make_dummies_variables",
-        requirements=["awswrangler==3.6.0"],
+        requirements=["awswrangler==3.17.1",
+                      "mlflow==3.16.1"],
         system_site_packages=True
     )
     def make_dummies_variables():
@@ -175,8 +176,8 @@ def process_etl_heart_data():
 
     @task.virtualenv(
         task_id="split_dataset",
-        requirements=["awswrangler==3.6.0",
-                      "scikit-learn==1.3.2"],
+        requirements=["awswrangler==3.17.1",
+                      "scikit-learn==1.9.1"],
         system_site_packages=True
     )
     def split_dataset():
@@ -213,9 +214,9 @@ def process_etl_heart_data():
 
     @task.virtualenv(
         task_id="normalize_numerical_features",
-        requirements=["awswrangler==3.6.0",
-                      "scikit-learn==1.3.2",
-                      "mlflow==2.10.2"],
+        requirements=["awswrangler==3.17.1",
+                      "scikit-learn==1.9.1",
+                      "mlflow==3.16.1"],
         system_site_packages=True
     )
     def normalize_data():
