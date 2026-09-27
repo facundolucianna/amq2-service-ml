@@ -9,7 +9,7 @@ TP final de Operaciones de Aprendizaje Automático I. Llevamos al ambiente produ
 
 ## Qué hace
 
-1. **ETL (Airflow):** baja un mes de la TLC, lo limpia con las mismas reglas de AMq1, toma una muestra y guarda train/test en `s3://data/taxi/`. *(pendiente)*
+1. **ETL (Airflow):** baja un mes de la TLC, lo limpia con las mismas reglas de AMq1, toma una muestra y guarda train/test en `s3://data/taxi/`. Por ahora, el archivo fuente hay que subirlo a mano a s3://data/raw/.
 2. **Experimento (notebook + MLflow):** búsqueda de hiperparámetros con Optuna, cada trial como run anidado. El mejor pipeline se registra como `taxi_tip_model` con alias `champion`. *(pendiente)*
 3. **Predicción en lote (Airflow):** toma un mes nuevo, predice con el `champion` y guarda los resultados en la tabla `predicciones_propina` de la base `taxi` en Postgres. Como la propina real también viene en los datos, registra el MAE del mes en MLflow. *(pendiente)*
 
@@ -76,6 +76,6 @@ y `mlflow.set_tracking_uri("http://localhost:5001")`. Dentro de los contenedores
 ## Estado
 
 - [x] Ambiente ajustado (versiones, base `taxi`, variables)
-- [ ] ETL
+- [x] ETL
 - [ ] Experimento y registro del modelo
 - [ ] Predicción en lote
