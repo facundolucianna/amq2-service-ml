@@ -1,4 +1,5 @@
 import json
+import logging
 import pickle
 import boto3
 import mlflow
@@ -10,8 +11,22 @@ from typing import Literal
 from fastapi import FastAPI, Body, BackgroundTasks
 from fastapi.responses import JSONResponse
 from fastapi.encoders import jsonable_encoder
+from mlflow.exceptions import MlflowException
 from pydantic import BaseModel, Field
 from typing_extensions import Annotated
+
+# Reuse uvicorn's logger so messages show up in `docker logs` with the same format
+logger = logging.getLogger("uvicorn.error")
+
+
+def _load_default_model():
+    """
+    Load the default model shipped with the image.
+
+    :return: A tuple containing the default model and its version (always 0).
+    """
+    with open('/app/files/model.pkl', 'rb') as file_ml:
+        return pickle.load(file_ml), 0
 
 
 def load_model(model_name: str, alias: str):
@@ -35,12 +50,17 @@ def load_model(model_name: str, alias: str):
         model_data_mlflow = client_mlflow.get_model_version_by_alias(model_name, alias)
         model_ml = mlflow.sklearn.load_model(model_data_mlflow.source)
         version_model_ml = int(model_data_mlflow.version)
-    except:
+        logger.info("Loaded model '%s@%s' version %s from MLflow", model_name, alias, version_model_ml)
+    except MlflowException as e:
         # If there is no registry in MLflow, open the default model
-        file_ml = open('/app/files/model.pkl', 'rb')
-        model_ml = pickle.load(file_ml)
-        file_ml.close()
-        version_model_ml = 0
+        if e.error_code == "RESOURCE_DOES_NOT_EXIST":
+            logger.warning("Model '%s@%s' not found in MLflow registry, using default model", model_name, alias)
+        else:
+            logger.exception("MLflow error loading '%s@%s', using default model", model_name, alias)
+        model_ml, version_model_ml = _load_default_model()
+    except Exception:
+        logger.exception("Unexpected error loading '%s@%s', using default model", model_name, alias)
+        model_ml, version_model_ml = _load_default_model()
 
     try:
         # Load information of the ETL pipeline from S3
@@ -53,8 +73,9 @@ def load_model(model_name: str, alias: str):
 
         data_dictionary["standard_scaler_mean"] = np.array(data_dictionary["standard_scaler_mean"])
         data_dictionary["standard_scaler_std"] = np.array(data_dictionary["standard_scaler_std"])
-    except:
+    except Exception:
         # If data dictionary is not found in S3, load it from local file
+        logger.warning("Could not load data_info/data.json from S3, using local file", exc_info=True)
         file_s3 = open('/app/files/data.json', 'r')
         data_dictionary = json.load(file_s3)
         file_s3.close()
@@ -90,11 +111,15 @@ def check_model():
         # If the versions are not the same
         if new_version_model != version_model:
             # Load the new model and update version and data dictionary
+            logger.info("Champion version changed (%s -> %s), reloading model", version_model, new_version_model)
             model, version_model, data_dict = load_model(model_name, alias)
 
-    except:
-        # If an error occurs during the process, pass silently
-        pass
+    except MlflowException as e:
+        # This runs after every prediction, so "no champion yet" is expected and not logged
+        if e.error_code != "RESOURCE_DOES_NOT_EXIST":
+            logger.warning("Failed to check champion model version: %s", e)
+    except Exception:
+        logger.exception("Unexpected error checking champion model version")
 
 
 class ModelInput(BaseModel):
