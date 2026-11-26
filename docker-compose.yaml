@@ -208,8 +208,10 @@ services:
       - AWS_SECRET_ACCESS_KEY=${MINIO_SECRET_ACCESS_KEY:-minio123}
       - MLFLOW_S3_ENDPOINT_URL=http://s3:9000
       - AWS_ENDPOINT_URL_S3=http://s3:9000
+      # Fail fast to the default model if MLflow is unreachable (default is 7 retries, ~4 min)
+      - MLFLOW_HTTP_REQUEST_MAX_RETRIES=2
     command: >
-      uvicorn app:app 
+      uvicorn app:app
       --host 0.0.0.0
       --port 8800
     healthcheck:
